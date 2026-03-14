@@ -9,24 +9,34 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import br.edu.utfpr.appcontatos.R
+import br.edu.utfpr.appcontatos.data.Contact
 import br.edu.utfpr.appcontatos.ui.theme.AppContatosTheme
+import kotlin.random.Random
 
 @Composable
 fun ContactsListScreen(modifier: Modifier = Modifier) {
@@ -164,4 +174,85 @@ fun EmptyListPreview() {
     AppContatosTheme {
         EmptyList()
     }
+}
+
+@Composable
+fun List(
+    modifier: Modifier = Modifier,
+    contacts: List<Contact> = emptyList()
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(state = rememberScrollState())
+    ) {
+        contacts.forEach { contact ->
+            var isFavorite = contact.isFavorite
+            ListItem(
+                headlineContent = {
+                    Text(contact.fullName)
+                },
+                trailingContent = {
+                    IconButton(
+                        onClick = {
+                            isFavorite = !isFavorite
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) {
+                                Icons.Filled.Favorite
+                            } else {
+                                Icons.Filled.FavoriteBorder
+                            },
+                            contentDescription = "Favoritar",
+                            tint = if (isFavorite) {
+                                Color.Red
+                            } else {
+                                LocalContentColor.current
+                            }
+                        )
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ListPreview() {
+    AppContatosTheme { 
+        List(
+            contacts = generateContacts()
+        )
+    }
+}
+
+private fun generateContacts(): List<Contact> {
+    val firstNames = listOf(
+        "João", "José", "Everton", "Marcos", "André", "Anderson", "Antônio",
+        "Laura", "Ana", "Maria", "Joaquina", "Suelen"
+    )
+    val lastNames = listOf(
+        "Do Carmo", "Oliveira", "Dos Santos", "Da Silva", "Brasil", "Pichetti",
+        "Cordeiro", "Silveira", "Andrades", "Cardoso"
+    )
+    val contacts: MutableList<Contact> = mutableListOf()
+    for (i in 0..19) {
+        var generatedNewContact = false
+        while (!generatedNewContact) {
+            val firstNameIndex = Random.nextInt(firstNames.size)
+            val lastNameIndex = Random.nextInt(lastNames.size)
+            val newContact = Contact(
+                id = i + 1,
+                firstName = firstNames[firstNameIndex],
+                lastName = lastNames[lastNameIndex]
+            )
+            if (!contacts.any { it.fullName == newContact.fullName }) {
+                contacts.add(newContact)
+                generatedNewContact = true
+            }
+        }
+    }
+    return contacts
 }
