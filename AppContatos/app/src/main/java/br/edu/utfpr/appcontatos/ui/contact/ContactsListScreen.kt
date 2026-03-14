@@ -1,5 +1,6 @@
 package br.edu.utfpr.appcontatos.ui.contact
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,8 +21,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import br.edu.utfpr.appcontatos.R
 import br.edu.utfpr.appcontatos.ui.theme.AppContatosTheme
 
 @Composable
@@ -121,5 +125,43 @@ fun ErrorState(modifier: Modifier = Modifier) {
 fun ErrorStatePreview() {
     AppContatosTheme {
         ErrorState()
+    }
+}
+
+@Composable
+fun EmptyList(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .padding(all = 16.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(R.drawable.no_data),
+            contentDescription = "Nada por aqui..."
+        )
+        Text(
+            text = "Nada por aqui...",
+            modifier = Modifier.padding(top = 16.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = "Você ainda não adicionou nenhum contato." +
+                    "\nAdicione o primeiro utilizando o botão \"Novo contato\"",
+            modifier = Modifier.padding(top = 16.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Preview(showBackground = true, heightDp = 400)
+@Composable
+fun EmptyListPreview() {
+    AppContatosTheme {
+        EmptyList()
     }
 }
