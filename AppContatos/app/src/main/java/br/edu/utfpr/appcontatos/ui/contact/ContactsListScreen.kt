@@ -23,6 +23,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -40,7 +41,28 @@ import kotlin.random.Random
 
 @Composable
 fun ContactsListScreen(modifier: Modifier = Modifier) {
+    var isLoading = true
+    var isError = false
+    var contacts = listOf<Contact>()
 
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = { AppBar() }
+    ) { paddingValues ->
+        val defaultModifier: Modifier = Modifier.padding(paddingValues)
+        if (isLoading) {
+            LoadingState(modifier = defaultModifier)
+        } else if (isError) {
+            ErrorState(modifier = defaultModifier)
+        } else if (contacts.isEmpty()) {
+            EmptyList(modifier = defaultModifier)
+        } else {
+            List(
+                modifier = defaultModifier,
+                contacts = contacts
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
