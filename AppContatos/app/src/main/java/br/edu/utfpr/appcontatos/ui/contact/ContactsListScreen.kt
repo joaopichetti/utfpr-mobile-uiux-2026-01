@@ -87,6 +87,16 @@ fun ContactsListScreen(
         }
     }
 
+    val toggleIsFavorite: (Contact) -> Unit = { updatedContact ->
+        contactsState.value = contactsState.value.map { currentContact ->
+            if (currentContact.id == updatedContact.id) {
+                currentContact.copy(isFavorite = !currentContact.isFavorite)
+            } else {
+                currentContact
+            }
+        }
+    }
+
     if (isInitialCompositionState.value) {
         loadContacts()
         isInitialCompositionState.value = false
@@ -129,7 +139,8 @@ fun ContactsListScreen(
             } else {
                 List(
                     modifier = defaultModifier,
-                    contacts = contactsState.value
+                    contacts = contactsState.value,
+                    onFavoritePressed = toggleIsFavorite
                 )
             }
         }
@@ -294,14 +305,18 @@ fun EmptyListPreview() {
 @Composable
 fun List(
     modifier: Modifier = Modifier,
-    contacts: List<Contact> = emptyList()
+    contacts: List<Contact> = emptyList(),
+    onFavoritePressed: (Contact) -> Unit
 ) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
     ) {
         items(contacts) { contact ->
-            ContactListItem(contact = contact)
+            ContactListItem(
+                contact = contact,
+                onFavoritePressed = onFavoritePressed
+            )
         }
     }
 }
@@ -311,7 +326,8 @@ fun List(
 fun ListPreview() {
     AppContatosTheme { 
         List(
-            contacts = generateContacts()
+            contacts = generateContacts(),
+            onFavoritePressed = {}
         )
     }
 }
@@ -319,11 +335,9 @@ fun ListPreview() {
 @Composable
 fun ContactListItem(
     modifier: Modifier = Modifier,
-    contact: Contact
+    contact: Contact,
+    onFavoritePressed: (Contact) -> Unit
 ) {
-    val isFavoriteState: MutableState<Boolean> = rememberSaveable {
-        mutableStateOf(contact.isFavorite)
-    }
     ListItem(
         modifier = modifier,
         headlineContent = {
@@ -332,17 +346,17 @@ fun ContactListItem(
         trailingContent = {
             IconButton(
                 onClick = {
-                    isFavoriteState.value = !isFavoriteState.value
+                    onFavoritePressed(contact)
                 }
             ) {
                 Icon(
-                    imageVector = if (isFavoriteState.value) {
+                    imageVector = if (contact.isFavorite) {
                         Icons.Filled.Favorite
                     } else {
                         Icons.Filled.FavoriteBorder
                     },
                     contentDescription = "Favoritar",
-                    tint = if (isFavoriteState.value) {
+                    tint = if (contact.isFavorite) {
                         Color.Red
                     } else {
                         LocalContentColor.current
