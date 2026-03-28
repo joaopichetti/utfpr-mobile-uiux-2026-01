@@ -77,19 +77,20 @@ class ContactFormViewModel(
     }
 
     fun save() {
-        if (uiState.isSaving || !isValidForm()) return
+        if (uiState.isProcessing || !isValidForm()) return
 
         uiState = uiState.copy(
-            isSaving = true,
-            hasErrorSaving = false
+            isProcessing = true,
+            processingErrorMessage = ""
         )
         viewModelScope.launch {
             delay(2000)
             val hasError = Random.nextBoolean()
             uiState = if (hasError) {
                 uiState.copy(
-                    isSaving = false,
-                    hasErrorSaving = true
+                    isProcessing = false,
+                    processingErrorMessage =
+                        "Ocorreu um erro ao salvar. Aguarde um momento e tente novamente."
                 )
             } else {
                 val contactToSave = uiState.contact.copy(
@@ -110,8 +111,41 @@ class ContactFormViewModel(
                 )
                 ContactDatasource.instance.save(contactToSave)
                 uiState.copy(
-                    isSaving = false,
-                    contactSaved = true
+                    isProcessing = false,
+                    contactUpdated = true
+                )
+            }
+        }
+    }
+
+    fun showConfirmationDialog() {
+        uiState = uiState.copy(showConfirmationDialog = true)
+    }
+
+    fun hideConfirmationDialog() {
+        uiState = uiState.copy(showConfirmationDialog = false)
+    }
+
+    fun delete() {
+        uiState = uiState.copy(
+            isProcessing = true,
+            showConfirmationDialog = false,
+            processingErrorMessage = ""
+        )
+        viewModelScope.launch {
+            delay(2000)
+            val hasError = Random.nextBoolean()
+            uiState = if (hasError) {
+                uiState.copy(
+                    isProcessing = false,
+                    processingErrorMessage =
+                        "Ocorreu um erro ao remover. Aguarde um momento e tente novamente."
+                )
+            } else {
+                ContactDatasource.instance.delete(uiState.contact)
+                uiState.copy(
+                    isProcessing = false,
+                    contactUpdated = true
                 )
             }
         }
