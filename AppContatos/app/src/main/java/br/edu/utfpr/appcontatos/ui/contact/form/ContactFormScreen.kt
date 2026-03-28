@@ -5,22 +5,29 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -45,8 +52,24 @@ import br.edu.utfpr.appcontatos.ui.theme.AppContatosTheme
 fun ContactFormScreen(
     modifier: Modifier = Modifier,
     onBackPressed: () -> Unit,
-    viewModel: ContactFormViewModel = viewModel()
+    viewModel: ContactFormViewModel = viewModel(),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    onContactSaved: () -> Unit
 ) {
+    LaunchedEffect(viewModel.uiState.contactSaved) {
+        if (viewModel.uiState.contactSaved) {
+            onContactSaved()
+        }
+    }
+
+    LaunchedEffect(snackbarHostState, viewModel.uiState.hasErrorSaving) {
+        if (viewModel.uiState.hasErrorSaving) {
+            snackbarHostState.showSnackbar(
+                "Ocorreu um erro ao salvar. Aguarde um momento e tente novamente."
+            )
+        }
+    }
+
     val contentModifier: Modifier = modifier.fillMaxSize()
     if (viewModel.uiState.isLoading) {
         DefaultLoadingState(modifier = contentModifier)
@@ -58,17 +81,23 @@ fun ContactFormScreen(
     } else {
         Scaffold(
             modifier = contentModifier,
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState)
+            },
             topBar = {
                 AppBar(
                     isNewContact = true,
-                    onBackPressed = onBackPressed
+                    onBackPressed = onBackPressed,
+                    isSaving = viewModel.uiState.isSaving,
+                    onSavePressed = viewModel::save
                 )
             }
         ) { paddingValues ->
             FormContent(
                 modifier = Modifier.padding(paddingValues),
                 formState = viewModel.uiState.formState,
-                onFormEvent = viewModel::onFormEvent
+                onFormEvent = viewModel::onFormEvent,
+                isSaving = viewModel.uiState.isSaving
             )
         }
     }
@@ -79,7 +108,9 @@ fun ContactFormScreen(
 private fun AppBar(
     modifier: Modifier = Modifier,
     isNewContact: Boolean,
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    isSaving: Boolean,
+    onSavePressed: () -> Unit
 ) {
     TopAppBar(
         modifier = modifier.fillMaxWidth(),
@@ -93,6 +124,23 @@ private fun AppBar(
                     contentDescription = "Voltar"
                 )
             }
+        },
+        actions = {
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(16.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                IconButton(onClick = onSavePressed) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Salvar"
+                    )
+                }
+            }
         }
     )
 }
@@ -104,12 +152,29 @@ private class BooleanParameterProvider : PreviewParameterProvider<Boolean> {
 @Preview(showBackground = true)
 @Composable
 private fun AppBarPreview(
-    @PreviewParameter(BooleanParameterProvider::class) isNewContact: Boolean
+    @PreviewParameter(BooleanParameterProvider::class) isNewContact: Boolean,
 ) {
     AppContatosTheme {
         AppBar(
             isNewContact = isNewContact,
-            onBackPressed = {}
+            onBackPressed = {},
+            isSaving = false,
+            onSavePressed = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppBarPreviewSaving(
+    @PreviewParameter(BooleanParameterProvider::class) isSaving: Boolean
+) {
+    AppContatosTheme {
+        AppBar(
+            isNewContact = true,
+            onBackPressed = {},
+            isSaving = isSaving,
+            onSavePressed = {}
         )
     }
 }
@@ -118,7 +183,8 @@ private fun AppBarPreview(
 private fun FormContent(
     modifier: Modifier = Modifier,
     formState: FormState,
-    onFormEvent: (FormEvent) -> Unit
+    onFormEvent: (FormEvent) -> Unit,
+    isSaving: Boolean
 ) {
     Column(
         modifier = modifier
@@ -149,7 +215,8 @@ private fun FormContent(
                 onValueChange = { newValue ->
                     onFormEvent(FormEvent.UpdateFirstName(newValue))
                 },
-                keyboardCapitalization = KeyboardCapitalization.Words
+                keyboardCapitalization = KeyboardCapitalization.Words,
+                enabled = !isSaving
             )
         }
         FormFieldRow(
@@ -163,7 +230,8 @@ private fun FormContent(
                 onValueChange = { newValue ->
                     onFormEvent(FormEvent.UpdateLastName(newValue))
                 },
-                keyboardCapitalization = KeyboardCapitalization.Words
+                keyboardCapitalization = KeyboardCapitalization.Words,
+                enabled = !isSaving
             )
         }
         FormFieldRow(
@@ -178,7 +246,8 @@ private fun FormContent(
                 onValueChange = { newValue ->
                     onFormEvent(FormEvent.UpdatePhoneNumber(newValue))
                 },
-                keyboardType = KeyboardType.Phone
+                keyboardType = KeyboardType.Phone,
+                enabled = !isSaving
             )
         }
         FormFieldRow(
@@ -193,7 +262,8 @@ private fun FormContent(
                 onValueChange = { newValue ->
                     onFormEvent(FormEvent.UpdateEmail(newValue))
                 },
-                keyboardType = KeyboardType.Email
+                keyboardType = KeyboardType.Email,
+                enabled = !isSaving
             )
         }
         FormFieldRow(
@@ -206,7 +276,8 @@ private fun FormContent(
                 errorMessage = formState.birthDate.errorMessage,
                 onValueChange = { newValue ->
                     onFormEvent(FormEvent.UpdateBirthDate(newValue))
-                }
+                },
+                enabled = !isSaving
             )
         }
         FormFieldRow(
@@ -221,7 +292,8 @@ private fun FormContent(
                 onValueChange = { newValue ->
                     onFormEvent(FormEvent.UpdateAssetValue(newValue))
                 },
-                keyboardType = KeyboardType.Number
+                keyboardType = KeyboardType.Number,
+                enabled = !isSaving
             )
         }
         val choiceOptionsModifier = Modifier.padding(8.dp)
@@ -234,7 +306,8 @@ private fun FormContent(
                 checked = formState.isFavorite.value,
                 onCheckedChange = { newValue ->
                     onFormEvent(FormEvent.UpdateIsFavorite(newValue))
-                }
+                },
+                enabled = !isSaving
             )
         }
         FormFieldRow(
@@ -247,7 +320,8 @@ private fun FormContent(
                 groupValue = formState.type.value,
                 onValueChanged = { newValue ->
                     onFormEvent(FormEvent.UpdateType(newValue))
-                }
+                },
+                enabled = !isSaving
             )
             FormRadioButton(
                 modifier = choiceOptionsModifier,
@@ -256,7 +330,8 @@ private fun FormContent(
                 groupValue = formState.type.value,
                 onValueChanged = { newValue ->
                     onFormEvent(FormEvent.UpdateType(newValue))
-                }
+                },
+                enabled = !isSaving
             )
         }
     }
@@ -268,7 +343,8 @@ private fun FormContentPreview() {
     AppContatosTheme {
         FormContent(
             formState = FormState(),
-            onFormEvent = {}
+            onFormEvent = {},
+            isSaving = false
         )
     }
 }

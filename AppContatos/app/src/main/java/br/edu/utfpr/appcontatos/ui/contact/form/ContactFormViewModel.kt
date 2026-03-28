@@ -76,6 +76,47 @@ class ContactFormViewModel(
         }
     }
 
+    fun save() {
+        if (uiState.isSaving || !isValidForm()) return
+
+        uiState = uiState.copy(
+            isSaving = true,
+            hasErrorSaving = false
+        )
+        viewModelScope.launch {
+            delay(2000)
+            val hasError = Random.nextBoolean()
+            uiState = if (hasError) {
+                uiState.copy(
+                    isSaving = false,
+                    hasErrorSaving = true
+                )
+            } else {
+                val contactToSave = uiState.contact.copy(
+                    firstName = uiState.formState.firstName.value,
+                    lastName = uiState.formState.lastName.value,
+                    phoneNumber = uiState.formState.phoneNumber.value,
+                    email = uiState.formState.email.value,
+                    isFavorite = uiState.formState.isFavorite.value,
+                    assetValue = uiState.formState.assetValue.value.let {
+                        if (it.isBlank()) {
+                            BigDecimal.ZERO
+                        } else {
+                            BigDecimal(it)
+                        }
+                    },
+                    type = uiState.formState.type.value,
+                    birthDate = uiState.formState.birthDate.value
+                )
+                ContactDatasource.instance.save(contactToSave)
+                uiState.copy(
+                    isSaving = false,
+                    contactSaved = true
+                )
+            }
+        }
+    }
+
     private fun onFirstNameChanged(newValue: String) {
         if (uiState.formState.firstName.value == newValue) return
 
@@ -201,5 +242,25 @@ class ContactFormViewModel(
                 type = FormField(newValue)
             )
         )
+    }
+
+    private fun isValidForm(): Boolean {
+        uiState = uiState.copy(
+            formState = uiState.formState.copy(
+                firstName = uiState.formState.firstName.copy(
+                    errorMessage = validateFirstName(uiState.formState.firstName.value)
+                ),
+                phoneNumber = uiState.formState.phoneNumber.copy(
+                    errorMessage = validatePhoneNumber(uiState.formState.phoneNumber.value)
+                ),
+                email = uiState.formState.email.copy(
+                    errorMessage = validateEmail(uiState.formState.email.value)
+                ),
+                assetValue = uiState.formState.assetValue.copy(
+                    errorMessage = validateAssetValue(uiState.formState.assetValue.value)
+                )
+            )
+        )
+        return uiState.formState.isValid
     }
 }
