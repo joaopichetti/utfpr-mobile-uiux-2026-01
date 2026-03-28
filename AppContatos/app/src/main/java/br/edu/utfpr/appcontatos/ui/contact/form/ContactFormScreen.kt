@@ -46,6 +46,8 @@ import br.edu.utfpr.appcontatos.ui.contact.form.composables.FormDatePicker
 import br.edu.utfpr.appcontatos.ui.contact.form.composables.FormFieldRow
 import br.edu.utfpr.appcontatos.ui.contact.form.composables.FormRadioButton
 import br.edu.utfpr.appcontatos.ui.contact.form.composables.FormTextField
+import br.edu.utfpr.appcontatos.ui.contact.form.visualtransformation.CurrencyVisualTransformation
+import br.edu.utfpr.appcontatos.ui.contact.form.visualtransformation.PhoneVisualTransformation
 import br.edu.utfpr.appcontatos.ui.shared.composables.ContactAvatar
 import br.edu.utfpr.appcontatos.ui.shared.composables.DefaultErrorState
 import br.edu.utfpr.appcontatos.ui.shared.composables.DefaultLoadingState
@@ -268,7 +270,8 @@ private fun FormContent(
                     onFormEvent(FormEvent.UpdatePhoneNumber(newValue))
                 },
                 keyboardType = KeyboardType.Phone,
-                enabled = !isSaving
+                enabled = !isSaving,
+                visualTransformation = PhoneVisualTransformation()
             )
         }
         FormFieldRow(
@@ -314,7 +317,8 @@ private fun FormContent(
                     onFormEvent(FormEvent.UpdateAssetValue(newValue))
                 },
                 keyboardType = KeyboardType.Number,
-                enabled = !isSaving
+                enabled = !isSaving,
+                visualTransformation = CurrencyVisualTransformation()
             )
         }
         val choiceOptionsModifier = Modifier.padding(8.dp)
