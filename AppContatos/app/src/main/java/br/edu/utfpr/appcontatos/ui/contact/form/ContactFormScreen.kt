@@ -30,7 +30,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import br.edu.utfpr.appcontatos.data.Contact
 import br.edu.utfpr.appcontatos.data.ContactTypeEnum
 import br.edu.utfpr.appcontatos.ui.contact.form.composables.FormCheckbox
 import br.edu.utfpr.appcontatos.ui.contact.form.composables.FormDatePicker
@@ -68,7 +67,8 @@ fun ContactFormScreen(
         ) { paddingValues ->
             FormContent(
                 modifier = Modifier.padding(paddingValues),
-                contact = viewModel.uiState.contact
+                formState = viewModel.uiState.formState,
+                onFormEvent = viewModel::onFormEvent
             )
         }
     }
@@ -117,7 +117,8 @@ private fun AppBarPreview(
 @Composable
 private fun FormContent(
     modifier: Modifier = Modifier,
-    contact: Contact
+    formState: FormState,
+    onFormEvent: (FormEvent) -> Unit
 ) {
     Column(
         modifier = modifier
@@ -131,8 +132,8 @@ private fun FormContent(
             .padding(horizontal = 16.dp, vertical = 8.dp)
         ContactAvatar(
             modifier = Modifier.padding(16.dp),
-            firstName = contact.firstName,
-            lastName = contact.lastName,
+            firstName = formState.firstName.value,
+            lastName = formState.lastName.value,
             size = 150.dp,
             textStyle = MaterialTheme.typography.displayLarge
         )
@@ -143,8 +144,11 @@ private fun FormContent(
             FormTextField(
                 modifier = formTextFieldModifier,
                 label = "Nome",
-                value = contact.firstName,
-                onValueChange = {},
+                value = formState.firstName.value,
+                errorMessage = formState.firstName.errorMessage,
+                onValueChange = { newValue ->
+                    onFormEvent(FormEvent.UpdateFirstName(newValue))
+                },
                 keyboardCapitalization = KeyboardCapitalization.Words
             )
         }
@@ -154,8 +158,11 @@ private fun FormContent(
             FormTextField(
                 modifier = formTextFieldModifier,
                 label = "Sobrenome",
-                value = contact.lastName,
-                onValueChange = {},
+                value = formState.lastName.value,
+                errorMessage = formState.lastName.errorMessage,
+                onValueChange = { newValue ->
+                    onFormEvent(FormEvent.UpdateLastName(newValue))
+                },
                 keyboardCapitalization = KeyboardCapitalization.Words
             )
         }
@@ -166,8 +173,11 @@ private fun FormContent(
             FormTextField(
                 modifier = formTextFieldModifier,
                 label = "Telefone",
-                value = contact.phoneNumber,
-                onValueChange = {},
+                value = formState.phoneNumber.value,
+                errorMessage = formState.phoneNumber.errorMessage,
+                onValueChange = { newValue ->
+                    onFormEvent(FormEvent.UpdatePhoneNumber(newValue))
+                },
                 keyboardType = KeyboardType.Phone
             )
         }
@@ -178,8 +188,11 @@ private fun FormContent(
             FormTextField(
                 modifier = formTextFieldModifier,
                 label = "E-mail",
-                value = contact.email,
-                onValueChange = {},
+                value = formState.email.value,
+                errorMessage = formState.email.errorMessage,
+                onValueChange = { newValue ->
+                    onFormEvent(FormEvent.UpdateEmail(newValue))
+                },
                 keyboardType = KeyboardType.Email
             )
         }
@@ -189,8 +202,11 @@ private fun FormContent(
             FormDatePicker(
                 modifier = formTextFieldModifier,
                 label = "Data de aniversário",
-                value = contact.birthDate,
-                onValueChange = {}
+                value = formState.birthDate.value,
+                errorMessage = formState.birthDate.errorMessage,
+                onValueChange = { newValue ->
+                    onFormEvent(FormEvent.UpdateBirthDate(newValue))
+                }
             )
         }
         FormFieldRow(
@@ -200,8 +216,11 @@ private fun FormContent(
             FormTextField(
                 modifier = formTextFieldModifier,
                 label = "Valor patrimonial",
-                value = contact.assetValue.toString(),
-                onValueChange = {},
+                value = formState.assetValue.value,
+                errorMessage = formState.assetValue.errorMessage,
+                onValueChange = { newValue ->
+                    onFormEvent(FormEvent.UpdateAssetValue(newValue))
+                },
                 keyboardType = KeyboardType.Number
             )
         }
@@ -212,8 +231,10 @@ private fun FormContent(
             FormCheckbox(
                 modifier = choiceOptionsModifier,
                 label = "Favorito",
-                checked = contact.isFavorite,
-                onCheckedChange = {}
+                checked = formState.isFavorite.value,
+                onCheckedChange = { newValue ->
+                    onFormEvent(FormEvent.UpdateIsFavorite(newValue))
+                }
             )
         }
         FormFieldRow(
@@ -223,15 +244,19 @@ private fun FormContent(
                 modifier = choiceOptionsModifier,
                 label = "Pessoal",
                 value = ContactTypeEnum.PERSONAL,
-                groupValue = contact.type,
-                onValueChanged = {}
+                groupValue = formState.type.value,
+                onValueChanged = { newValue ->
+                    onFormEvent(FormEvent.UpdateType(newValue))
+                }
             )
             FormRadioButton(
                 modifier = choiceOptionsModifier,
                 label = "Profissional",
                 value = ContactTypeEnum.PROFESSIONAL,
-                groupValue = contact.type,
-                onValueChanged = {}
+                groupValue = formState.type.value,
+                onValueChanged = { newValue ->
+                    onFormEvent(FormEvent.UpdateType(newValue))
+                }
             )
         }
     }
@@ -242,7 +267,8 @@ private fun FormContent(
 private fun FormContentPreview() {
     AppContatosTheme {
         FormContent(
-            contact = Contact()
+            formState = FormState(),
+            onFormEvent = {}
         )
     }
 }
